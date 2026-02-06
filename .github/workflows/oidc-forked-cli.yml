@@ -40,7 +40,7 @@ jobs:
       - name: configure environment
         run: |
           python3 -m pip install --upgrade pip setuptools wheel sigstore
-          wheel -h
+          python3 -m wheel -h
           pip show setuptools
           echo $VIRTUAL_ENV
 
