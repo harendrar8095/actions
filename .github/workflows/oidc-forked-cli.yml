@@ -24,6 +24,14 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
+      - name: Prepare pip wrapper
+        run: |
+          mkdir -p .bin
+          echo '#!/bin/sh
+          exec python3 -m pip "$@"' > .bin/pip
+          chmod +x .bin/pip
+          echo "$GITHUB_WORKSPACE/.bin" >> $GITHUB_PATH
+
       - name: Setup JFrog CLI
         id: setup-cli
         uses: jfrog/setup-jfrog-cli@v4
