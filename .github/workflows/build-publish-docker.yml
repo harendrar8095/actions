@@ -1,0 +1,49 @@
+name: "Build-Publish-Docker"
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write # This is required for OIDC
+  contents: read  # This is required for actions/checkout
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      JF_URL: "https://z0snowe2e.jfrogdev.org"
+      DOCKER_REPO: "coyote-docker-local"
+      IMAGE_NAME: "github-jfrog-testing"
+      VERSION: "52"
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ env.JF_URL }}
+        with:
+          # Replace 'github-oidc' with the name you gave your 
+          # OIDC Integration in JFrog Administration
+          oidc-provider-name: "github-oidc" 
+
+      - name: Docker Login
+        run: jf docker-login
+
+      - name: Build and Push with Evidence
+        run: |
+          # The domain is the URL without https://
+          DOMAIN=$(echo ${{ env.JF_URL }} | sed 's~http[s]*://~~')
+          
+          # Build
+          docker build -t $DOMAIN/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} .
+          
+          # Push & Track Build Info
+          jf docker push $DOMAIN/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            --build-name=${{ env.IMAGE_NAME }} --build-number=${{ env.VERSION }}
+
+          # Seal Build Info (Evidence for AppTrust)
+          jf rt build-collect-env ${{ env.IMAGE_NAME }} ${{ env.VERSION }}
+          jf rt build-publish ${{ env.IMAGE_NAME }} ${{ env.VERSION }}
