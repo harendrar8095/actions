@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       JF_URL: "https://z0snowe2e.jfrogdev.org"
       DOCKER_REPO: "coyote-docker-local"
